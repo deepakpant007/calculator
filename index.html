@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Line Efficiency Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: inline-block; width: 150px; }
+    input, select { margin-bottom: 10px; }
+    .line-section { margin-bottom: 20px; }
+    #summary { white-space: pre-wrap; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>Line Efficiency Calculator</h2>
+
+  <!-- Line Sections -->
+  <div class="line-section">
+    <h3>Line 1</h3>
+    <label>SKU:</label>
+    <select id="l1_sku">
+      <option value="200_PDW">200 ml PDW</option>
+      <option value="250_PDW">250 ml PDW</option>
+      <option value="500_PDW">500 ml PDW</option>
+      <option value="1000_PDW">1000 ml PDW</option>
+      <option value="2000_PDW">2000 ml PDW</option>
+      <option value="250_NMW">250 ml NMW</option>
+      <option value="500_NMW">500 ml NMW</option>
+      <option value="1000_NMW">1000 ml NMW</option>
+    </select><br>
+    <label>Filler Counter:</label><input type="number" id="l1_filler"><br>
+    <label>Speed:</label><input type="number" id="l1_speed_value">
+    <select id="l1_speed_unit">
+      <option value="bpm">BPM</option>
+      <option value="bph">BPH</option>
+    </select><br>
+    <label>Cases:</label><input type="text" id="l1_cases" readonly><br>
+    <label>Efficiency:</label><input type="text" id="l1_eff" readonly><br>
+  </div>
+
+  <div class="line-section">
+    <h3>Line 2</h3>
+    <label>SKU:</label>
+    <select id="l2_sku">
+      <option value="200_PDW">200 ml PDW</option>
+      <option value="250_PDW">250 ml PDW</option>
+      <option value="500_PDW">500 ml PDW</option>
+      <option value="1000_PDW">1000 ml PDW</option>
+      <option value="2000_PDW">2000 ml PDW</option>
+      <option value="250_NMW">250 ml NMW</option>
+      <option value="500_NMW">500 ml NMW</option>
+      <option value="1000_NMW">1000 ml NMW</option>
+    </select><br>
+    <label>Filler Counter:</label><input type="number" id="l2_filler"><br>
+    <label>Speed:</label><input type="number" id="l2_speed_value">
+    <select id="l2_speed_unit">
+      <option value="bpm">BPM</option>
+      <option value="bph">BPH</option>
+    </select><br>
+    <label>Cases:</label><input type="text" id="l2_cases" readonly><br>
+    <label>Efficiency:</label><input type="text" id="l2_eff" readonly><br>
+  </div>
+
+  <div class="line-section">
+    <h3>Line 3</h3>
+    <label>SKU:</label>
+    <select id="l3_sku">
+      <option value="200_PDW">200 ml PDW</option>
+      <option value="250_PDW">250 ml PDW</option>
+      <option value="500_PDW">500 ml PDW</option>
+      <option value="1000_PDW">1000 ml PDW</option>
+      <option value="2000_PDW">2000 ml PDW</option>
+      <option value="250_NMW">250 ml NMW</option>
+      <option value="500_NMW">500 ml NMW</option>
+      <option value="1000_NMW">1000 ml NMW</option>
+    </select><br>
+    <label>Filler Counter:</label><input type="number" id="l3_filler"><br>
+    <label>Speed:</label><input type="number" id="l3_speed_value">
+    <select id="l3_speed_unit">
+      <option value="bpm">BPM</option>
+      <option value="bph">BPH</option>
+    </select><br>
+    <label>Cases:</label><input type="text" id="l3_cases" readonly><br>
+    <label>Efficiency:</label><input type="text" id="l3_eff" readonly><br>
+  </div>
+
+  <button onclick="calculateAll()">Calculate</button>
+
+  <h3>Summary</h3>
+  <pre id="summary"></pre>
+  <button onclick="copySummary()">Copy Summary</button>
+<script>
+    const bottlesPerCase = {
+      "200_PDW": 48,
+      "250_PDW": 24,
+      "500_PDW": 24,
+      "1000_PDW": 12,
+      "2000_PDW": 9,
+      "250_NMW": 24,
+      "500_NMW": 20,
+      "1000_NMW": 12,
+    };
+function skuName(code) {
+  switch (code) {
+    case "200_PDW": return "200 ml PDW";
+    case "250_PDW": return "250 ml PDW";
+    case "500_PDW": return "500 ml PDW";
+    case "1000_PDW": return "1000 ml PDW";
+    case "2000_PDW": return "2000 ml PDW";
+    case "250_NMW": return "250 ml NMW";
+    case "500_NMW": return "500 ml NMW";
+    case "1000_NMW": return "1000 ml NMW";
+    default: return code;
+  }
+}
+
+function calcLine(prefix) {
+  const sku = document.getElementById(prefix + "_sku").value;
+  const filler = parseFloat(document.getElementById(prefix + "_filler").value || "0");
+  const speed = parseFloat(document.getElementById(prefix + "_speed_value").value || "0");
+  const unit = document.getElementById(prefix + "_speed_unit").value;
+
+  const bpc = bottlesPerCase[sku] || 1;
+  const cases = Math.floor(filler / bpc);
+
+  const bottlesPerHour = unit === "bpm" ? speed * 60 : speed;
+  const efficiency = bottlesPerHour > 0 ? (filler / bottlesPerHour) * 100 : 0;
+
+  document.getElementById(prefix + "_cases").value = cases;
+  document.getElementById(prefix + "_eff").value = efficiency.toFixed(2) + " %";
+
+  return {
+    sku: skuName(sku),
+    filler: filler,
+    cases: cases,
+    efficiency: efficiency.toFixed(2)
+  };
+}
+
+function calculateAll() {
+  const lines = [calcLine("l1"), calcLine("l2"), calcLine("l3")];
+  let summary = "";
+
+  lines.forEach((line, index) => {
+    if (line.filler > 0) {
+      summary += `Line ${index + 1}: ${line.sku}\n`;
+      summary += `Filler Counter: ${line.filler}\n`;
+      summary += `Number of Cases: ${line.cases}\n`;
+      summary += `Net Efficiency: ${line.efficiency}%\n\n`;
+    }
+  });
+
+  document.getElementById("summary").textContent = summary.trim() || "No data entered.";
+}
+
+function copySummary() {
+  const text = document.getElementById("summary").textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Summary copied to clipboard!");
+  }).catch(err => {
+    alert("Failed to copy summary: " + err);
+  });
+}
+  </script>
+
+</body>
+</html>
