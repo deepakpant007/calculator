@@ -5,7 +5,7 @@
   <title>Line Efficiency Calculator</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    label { display: inline-block; width: 150px; }
+    label { display: inline-block; width: 180px; }
     input, select { margin-bottom: 10px; }
     .line-section { margin-bottom: 20px; }
     #summary { white-space: pre-wrap; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; }
@@ -15,6 +15,16 @@
 <body>
 
   <h2>Line Efficiency Calculator</h2>
+
+  <!-- Shift selection -->
+  <div style="margin-bottom: 20px;">
+    <label>Shift:</label>
+    <select id="shift">
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+    </select>
+  </div>
 
   <!-- Line Sections -->
   <div class="line-section">
@@ -30,7 +40,14 @@
       <option value="500_NMW">500 ml NMW</option>
       <option value="1000_NMW">1000 ml NMW</option>
     </select><br>
-    <label>Filler Counter:</label><input type="number" id="l1_filler"><br>
+
+    <!-- total & previous hour -->
+    <label>Total Filler Counter:</label><input type="number" id="l1_total_filler"><br>
+    <label>Previous Hour Filler Counter:</label><input type="number" id="l1_prev_filler"><br>
+
+    <!-- filler is calculated -->
+    <label>Filler Counter:</label><input type="number" id="l1_filler" readonly><br>
+
     <label>Speed:</label><input type="number" id="l1_speed_value">
     <select id="l1_speed_unit">
       <option value="bpm">BPM</option>
@@ -53,7 +70,14 @@
       <option value="500_NMW">500 ml NMW</option>
       <option value="1000_NMW">1000 ml NMW</option>
     </select><br>
-    <label>Filler Counter:</label><input type="number" id="l2_filler"><br>
+
+    <!-- total & previous hour -->
+    <label>Total Filler Counter:</label><input type="number" id="l2_total_filler"><br>
+    <label>Previous Hour Filler Counter:</label><input type="number" id="l2_prev_filler"><br>
+
+    <!-- filler is calculated -->
+    <label>Filler Counter:</label><input type="number" id="l2_filler" readonly><br>
+
     <label>Speed:</label><input type="number" id="l2_speed_value">
     <select id="l2_speed_unit">
       <option value="bpm">BPM</option>
@@ -76,7 +100,14 @@
       <option value="500_NMW">500 ml NMW</option>
       <option value="1000_NMW">1000 ml NMW</option>
     </select><br>
-    <label>Filler Counter:</label><input type="number" id="l3_filler"><br>
+
+    <!-- total & previous hour -->
+    <label>Total Filler Counter:</label><input type="number" id="l3_total_filler"><br>
+    <label>Previous Hour Filler Counter:</label><input type="number" id="l3_prev_filler"><br>
+
+    <!-- filler is calculated -->
+    <label>Filler Counter:</label><input type="number" id="l3_filler" readonly><br>
+
     <label>Speed:</label><input type="number" id="l3_speed_value">
     <select id="l3_speed_unit">
       <option value="bpm">BPM</option>
@@ -91,79 +122,177 @@
   <h3>Summary</h3>
   <pre id="summary"></pre>
   <button onclick="copySummary()">Copy Summary</button>
+
 <script>
-    const bottlesPerCase = {
-      "200_PDW": 48,
-      "250_PDW": 24,
-      "500_PDW": 24,
-      "1000_PDW": 12,
-      "2000_PDW": 9,
-      "250_NMW": 24,
-      "500_NMW": 20,
-      "1000_NMW": 12,
-    };
-function skuName(code) {
-  switch (code) {
-    case "200_PDW": return "200 ml PDW";
-    case "250_PDW": return "250 ml PDW";
-    case "500_PDW": return "500 ml PDW";
-    case "1000_PDW": return "1000 ml PDW";
-    case "2000_PDW": return "2000 ml PDW";
-    case "250_NMW": return "250 ml NMW";
-    case "500_NMW": return "500 ml NMW";
-    case "1000_NMW": return "1000 ml NMW";
-    default: return code;
-  }
-}
-
-function calcLine(prefix) {
-  const sku = document.getElementById(prefix + "_sku").value;
-  const filler = parseFloat(document.getElementById(prefix + "_filler").value || "0");
-  const speed = parseFloat(document.getElementById(prefix + "_speed_value").value || "0");
-  const unit = document.getElementById(prefix + "_speed_unit").value;
-
-  const bpc = bottlesPerCase[sku] || 1;
-  const cases = Math.floor(filler / bpc);
-
-  const bottlesPerHour = unit === "bpm" ? speed * 60 : speed;
-  const efficiency = bottlesPerHour > 0 ? (filler / bottlesPerHour) * 100 : 0;
-
-  document.getElementById(prefix + "_cases").value = cases;
-  document.getElementById(prefix + "_eff").value = efficiency.toFixed(2) + " %";
-
-  return {
-    sku: skuName(sku),
-    filler: filler,
-    cases: cases,
-    efficiency: efficiency.toFixed(2)
+  const bottlesPerCase = {
+    "200_PDW": 48,
+    "250_PDW": 24,
+    "500_PDW": 24,
+    "1000_PDW": 12,
+    "2000_PDW": 9,
+    "250_NMW": 24,
+    "500_NMW": 20,
+    "1000_NMW": 12,
   };
-}
 
-function calculateAll() {
-  const lines = [calcLine("l1"), calcLine("l2"), calcLine("l3")];
-  let summary = "";
-
-  lines.forEach((line, index) => {
-    if (line.filler > 0) {
-      summary += `Line ${index + 1}: ${line.sku}\n`;
-      summary += `Filler Counter: ${line.filler}\n`;
-      summary += `Number of Cases: ${line.cases}\n`;
-      summary += `Net Efficiency: ${line.efficiency}%\n\n`;
+  function skuName(code) {
+    switch (code) {
+      case "200_PDW": return "200 ml PDW";
+      case "250_PDW": return "250 ml PDW";
+      case "500_PDW": return "500 ml PDW";
+      case "1000_PDW": return "1000 ml PDW";
+      case "2000_PDW": return "2000 ml PDW";
+      case "250_NMW": return "250 ml NMW";
+      case "500_NMW": return "500 ml NMW";
+      case "1000_NMW": return "1000 ml NMW";
+      default: return code;
     }
+  }
+
+  // auto-calc filler = total - previous for a line
+  function updateFiller(line) {
+    const total = parseFloat(document.getElementById(line + "_total_filler").value || "0");
+    const prev  = parseFloat(document.getElementById(line + "_prev_filler").value || "0");
+    document.getElementById(line + "_filler").value = total - prev;
+  }
+
+  ["l1","l2","l3"].forEach(l => {
+    document.getElementById(l + "_total_filler").addEventListener("input", () => updateFiller(l));
+    document.getElementById(l + "_prev_filler").addEventListener("input", () => updateFiller(l));
   });
 
-  document.getElementById("summary").textContent = summary.trim() || "No data entered.";
-}
+  function calcLine(prefix) {
+    const sku = document.getElementById(prefix + "_sku").value;
+    const filler = parseFloat(document.getElementById(prefix + "_filler").value || "0");
+    const speed = parseFloat(document.getElementById(prefix + "_speed_value").value || "0");
+    const unit = document.getElementById(prefix + "_speed_unit").value;
 
-function copySummary() {
-  const text = document.getElementById("summary").textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Summary copied to clipboard!");
-  }).catch(err => {
-    alert("Failed to copy summary: " + err);
-  });
-}
-  </script>
+    const bpc = bottlesPerCase[sku] || 1;
+    const cases = Math.floor(filler / bpc);
+
+    const bottlesPerHour = unit === "bpm" ? speed * 60 : speed;
+    const efficiency = bottlesPerHour > 0 ? (filler / bottlesPerHour) * 100 : 0;
+
+    document.getElementById(prefix + "_cases").value = cases;
+    document.getElementById(prefix + "_eff").value = efficiency.toFixed(2) + " %";
+
+    return {
+      sku: skuName(sku),
+      filler: filler,
+      totalFiller: parseFloat(document.getElementById(prefix + "_total_filler").value || "0"),
+      cases: cases,
+      efficiency: efficiency
+    };
+  }
+
+  function formatDateDDMMYYYY(d) {
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = String(d.getMonth() + 1).padStart(2, "0");
+    const yr  = d.getFullYear();
+    return `${day}/${mon}/${yr}`;
+  }
+
+  // Rule: when phone time is between 00:00 and 06:59 and shift C is selected,
+  //       show previous day date.
+  function getShiftCDate(now) {
+    const h = now.getHours();
+    if (h >= 0 && h < 7) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      return d;
+    }
+    return now;
+  }
+
+  function getPreviousHourWindow(now) {
+    const current = new Date(now);
+    const prev = new Date(current);
+    prev.setMinutes(0, 0, 0);
+    prev.setHours(prev.getHours() - 1);
+
+    const startHour = prev.getHours();
+    const endHour = (startHour + 1) % 24;
+
+    function formatHour12(h) {
+      const suffix = h >= 12 ? "PM" : "AM";
+      const hour12 = ((h + 11) % 12) + 1;
+      return `${hour12}:00 ${suffix}`;
+    }
+
+    const timeStr = `${formatHour12(startHour)} to ${formatHour12(endHour)}`;
+    return timeStr;
+  }
+
+  function calculateAll() {
+    const l1 = calcLine("l1");
+    const l2 = calcLine("l2");
+    const l3 = calcLine("l3");
+    const lines = [l1, l2, l3];
+
+    const shift = document.getElementById("shift").value;
+    const now = new Date();
+
+    // Date logic
+    let dateForSummary;
+    if (shift === "C") {
+      dateForSummary = getShiftCDate(now);
+    } else {
+      dateForSummary = now;
+    }
+    const dateStr = formatDateDDMMYYYY(dateForSummary);
+
+    // Previous hour window in 12-hour format
+    const timeStr = getPreviousHourWindow(now);
+
+    let summary = "";
+    summary += `Date: ${dateStr}
+`;
+    summary += `Shift: ${shift}
+`;
+    summary += `Time: ${timeStr}
+
+`;
+
+    lines.forEach((line, index) => {
+      if (line.filler > 0) {
+        summary += `Line ${index + 1}: ${line.sku}
+`;
+        summary += `Filler Counter: ${line.filler}
+`;
+        summary += `Total Filler Counter: ${line.totalFiller}
+`;
+        summary += `Number of Cases: ${line.cases}
+`;
+        summary += `Net Efficiency: ${line.efficiency.toFixed(2)}%
+
+`;
+      }
+    });
+
+    // breakdown line
+    summary += `Breakdown:
+`;
+    lines.forEach((line, index) => {
+      if (line.filler > 0) {
+        const eff = line.efficiency / 100; // convert to 0–1
+        const minutes = (1 - eff) * 60;
+        summary += `Line ${index + 1}: ${minutes.toFixed(2)} minutes
+`;
+      }
+    });
+
+    document.getElementById("summary").textContent = summary.trim() || "No data entered.";
+  }
+
+  function copySummary() {
+    const text = document.getElementById("summary").textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Summary copied to clipboard!");
+    }).catch(err => {
+      alert("Failed to copy summary: " + err);
+    });
+  }
+</script>
 
 </body>
 </html>
