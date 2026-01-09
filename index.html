@@ -1,297 +1,336 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Line Efficiency Calculator</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    label { display: inline-block; width: 180px; }
-    input, select { margin-bottom: 10px; }
-    .line-section { margin-bottom: 20px; }
-    #summary { white-space: pre-wrap; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; }
-    button { margin-top: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>Line Efficiency Calculator</title>
+
+<style>
+:root{
+  --primary:#2563eb;
+  --secondary:#16a34a;
+  --accent:#f59e0b;
+  --danger:#dc2626;
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --text:#1f2937;
+}
+
+*{box-sizing:border-box}
+body{
+  font-family:'Segoe UI',Roboto,Arial;
+  background:var(--bg);
+  margin:0;
+  padding:20px;
+  color:var(--text);
+}
+
+h2,h3{
+  margin:0 0 10px;
+  text-align:center;
+}
+
+.container{
+  background:var(--card);
+  border-radius:14px;
+  padding:20px;
+  max-width:1300px;
+  margin:0 auto 20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+.header{
+  background:linear-gradient(135deg,var(--primary),#1e40af);
+  color:#fff;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+}
+
+.row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:15px;
+}
+
+.col{
+  flex:1;
+  min-width:260px;
+  background:#f8fafc;
+  padding:15px;
+  border-radius:12px;
+  border:1px solid #e5e7eb;
+}
+
+label{
+  font-size:13px;
+  margin-top:8px;
+  display:block;
+  font-weight:600;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:13px;
+  margin-top:4px;
+}
+
+input[readonly]{
+  background:#e5e7eb;
+  font-weight:600;
+}
+
+textarea{
+  min-height:110px;
+}
+
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.btn-primary{
+  background:var(--primary);
+  color:white;
+}
+
+.btn-secondary{
+  background:var(--secondary);
+  color:white;
+}
+
+.btn-accent{
+  background:var(--accent);
+  color:black;
+}
+
+button:hover{opacity:.9}
+
+.summary{
+  white-space:pre-wrap;
+  background:#0f172a;
+  color:#e5e7eb;
+  padding:15px;
+  border-radius:12px;
+  font-family:Consolas,monospace;
+  font-size:13px;
+}
+
+.footer-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  justify-content:center;
+}
+
+.line-title{
+  text-align:center;
+  background:linear-gradient(135deg,#e0f2fe,#bae6fd);
+  padding:6px;
+  border-radius:8px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.speed-row{
+  display:flex;
+  gap:6px;
+}
+</style>
 </head>
+
 <body>
 
+<div class="container header">
   <h2>Line Efficiency Calculator</h2>
+</div>
 
-  <!-- Shift selection -->
-  <div style="margin-bottom: 20px;">
-    <label>Shift:</label>
-    <select id="shift">
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="C">C</option>
-    </select>
-  </div>
+<div class="container">
+<div class="row">
+<div class="col">
+<label>Shift</label>
+<select id="shift">
+<option>A</option><option>B</option><option>C</option>
+</select>
+</div>
+<div class="col">
+<label>Date</label>
+<input id="date" readonly>
+</div>
+<div class="col">
+<label>Time</label>
+<input id="time" readonly>
+</div>
+</div>
+</div>
 
-  <!-- Line Sections -->
-  <div class="line-section">
-    <h3>Line 1</h3>
-    <label>SKU:</label>
-    <select id="l1_sku">
-      <option value="200_PDW">200 ml PDW</option>
-      <option value="250_PDW">250 ml PDW</option>
-      <option value="500_PDW">500 ml PDW</option>
-      <option value="1000_PDW">1000 ml PDW</option>
-      <option value="2000_PDW">2000 ml PDW</option>
-      <option value="250_NMW">250 ml NMW</option>
-      <option value="500_NMW">500 ml NMW</option>
-      <option value="1000_NMW">1000 ml NMW</option>
-    </select><br>
+<div class="container">
+<h3>Previous Hour Summary (Optional)</h3>
+<textarea id="prevSummary"></textarea>
+<button class="btn-accent" onclick="parseSummary()">Parse Summary</button>
+</div>
 
-    <!-- total & previous hour -->
-    <label>Total Filler Counter:</label><input type="number" id="l1_total_filler"><br>
-    <label>Previous Hour Filler Counter:</label><input type="number" id="l1_prev_filler"><br>
-
-    <!-- filler is calculated -->
-    <label>Filler Counter:</label><input type="number" id="l1_filler" readonly><br>
-
-    <label>Speed:</label><input type="number" id="l1_speed_value">
-    <select id="l1_speed_unit">
-      <option value="bpm">BPM</option>
-      <option value="bph">BPH</option>
-    </select><br>
-    <label>Cases:</label><input type="text" id="l1_cases" readonly><br>
-    <label>Efficiency:</label><input type="text" id="l1_eff" readonly><br>
-  </div>
-
-  <div class="line-section">
-    <h3>Line 2</h3>
-    <label>SKU:</label>
-    <select id="l2_sku">
-      <option value="200_PDW">200 ml PDW</option>
-      <option value="250_PDW">250 ml PDW</option>
-      <option value="500_PDW">500 ml PDW</option>
-      <option value="1000_PDW">1000 ml PDW</option>
-      <option value="2000_PDW">2000 ml PDW</option>
-      <option value="250_NMW">250 ml NMW</option>
-      <option value="500_NMW">500 ml NMW</option>
-      <option value="1000_NMW">1000 ml NMW</option>
-    </select><br>
-
-    <!-- total & previous hour -->
-    <label>Total Filler Counter:</label><input type="number" id="l2_total_filler"><br>
-    <label>Previous Hour Filler Counter:</label><input type="number" id="l2_prev_filler"><br>
-
-    <!-- filler is calculated -->
-    <label>Filler Counter:</label><input type="number" id="l2_filler" readonly><br>
-
-    <label>Speed:</label><input type="number" id="l2_speed_value">
-    <select id="l2_speed_unit">
-      <option value="bpm">BPM</option>
-      <option value="bph">BPH</option>
-    </select><br>
-    <label>Cases:</label><input type="text" id="l2_cases" readonly><br>
-    <label>Efficiency:</label><input type="text" id="l2_eff" readonly><br>
-  </div>
-
-  <div class="line-section">
-    <h3>Line 3</h3>
-    <label>SKU:</label>
-    <select id="l3_sku">
-      <option value="200_PDW">200 ml PDW</option>
-      <option value="250_PDW">250 ml PDW</option>
-      <option value="500_PDW">500 ml PDW</option>
-      <option value="1000_PDW">1000 ml PDW</option>
-      <option value="2000_PDW">2000 ml PDW</option>
-      <option value="250_NMW">250 ml NMW</option>
-      <option value="500_NMW">500 ml NMW</option>
-      <option value="1000_NMW">1000 ml NMW</option>
-    </select><br>
-
-    <!-- total & previous hour -->
-    <label>Total Filler Counter:</label><input type="number" id="l3_total_filler"><br>
-    <label>Previous Hour Filler Counter:</label><input type="number" id="l3_prev_filler"><br>
-
-    <!-- filler is calculated -->
-    <label>Filler Counter:</label><input type="number" id="l3_filler" readonly><br>
-
-    <label>Speed:</label><input type="number" id="l3_speed_value">
-    <select id="l3_speed_unit">
-      <option value="bpm">BPM</option>
-      <option value="bph">BPH</option>
-    </select><br>
-    <label>Cases:</label><input type="text" id="l3_cases" readonly><br>
-    <label>Efficiency:</label><input type="text" id="l3_eff" readonly><br>
-  </div>
-
-  <button onclick="calculateAll()">Calculate</button>
-
-  <h3>Summary</h3>
-  <pre id="summary"></pre>
-  <button onclick="copySummary()">Copy Summary</button>
+<div class="container">
+<div class="row">
 
 <script>
-  const bottlesPerCase = {
-    "200_PDW": 48,
-    "250_PDW": 24,
-    "500_PDW": 24,
-    "1000_PDW": 12,
-    "2000_PDW": 9,
-    "250_NMW": 24,
-    "500_NMW": 20,
-    "1000_NMW": 12,
-  };
+const skus={
+ "200 ml PDW":48,"250 ml PDW":24,"500 ml PDW":24,
+ "1000 ml PDW":12,"2000 ml PDW":9,
+ "250 ml NMW":24,"500 ml NMW":20,"1000 ml NMW":12
+};
 
-  function skuName(code) {
-    switch (code) {
-      case "200_PDW": return "200 ml PDW";
-      case "250_PDW": return "250 ml PDW";
-      case "500_PDW": return "500 ml PDW";
-      case "1000_PDW": return "1000 ml PDW";
-      case "2000_PDW": return "2000 ml PDW";
-      case "250_NMW": return "250 ml NMW";
-      case "500_NMW": return "500 ml NMW";
-      case "1000_NMW": return "1000 ml NMW";
-      default: return code;
-    }
-  }
+for(let i=1;i<=3;i++){
+document.write(`
+<div class="col">
+<div class="line-title">Line ${i}</div>
 
-  // auto-calc filler = total - previous for a line
-  function updateFiller(line) {
-    const total = parseFloat(document.getElementById(line + "_total_filler").value || "0");
-    const prev  = parseFloat(document.getElementById(line + "_prev_filler").value || "0");
-    document.getElementById(line + "_filler").value = total - prev;
-  }
+<label>SKU</label>
+<select id="sku${i}" onchange="calc(${i})">
+${Object.keys(skus).map(s=>`<option>${s}</option>`).join("")}
+</select>
 
-  ["l1","l2","l3"].forEach(l => {
-    document.getElementById(l + "_total_filler").addEventListener("input", () => updateFiller(l));
-    document.getElementById(l + "_prev_filler").addEventListener("input", () => updateFiller(l));
-  });
+<label>Total Filler Counter</label>
+<input type="number" id="total${i}" oninput="calc(${i})">
 
-  function calcLine(prefix) {
-    const sku = document.getElementById(prefix + "_sku").value;
-    const filler = parseFloat(document.getElementById(prefix + "_filler").value || "0");
-    const speed = parseFloat(document.getElementById(prefix + "_speed_value").value || "0");
-    const unit = document.getElementById(prefix + "_speed_unit").value;
+<label>Previous Hour Counter</label>
+<input type="number" id="prev${i}" oninput="calc(${i})">
 
-    const bpc = bottlesPerCase[sku] || 1;
-    const cases = Math.floor(filler / bpc);
+<label>Filler Counter</label>
+<input id="filler${i}" readonly>
 
-    const bottlesPerHour = unit === "bpm" ? speed * 60 : speed;
-    const efficiency = bottlesPerHour > 0 ? (filler / bottlesPerHour) * 100 : 0;
+<label>Speed</label>
+<div class="speed-row">
+<input type="number" id="speed${i}" oninput="calc(${i})">
+<select id="unit${i}" onchange="calc(${i})">
+<option>BPM</option>
+<option>BPH</option>
+</select>
+</div>
 
-    document.getElementById(prefix + "_cases").value = cases;
-    document.getElementById(prefix + "_eff").value = efficiency.toFixed(2) + " %";
+<label>Number of Cases</label>
+<input id="cases${i}" readonly>
 
-    return {
-      sku: skuName(sku),
-      filler: filler,
-      totalFiller: parseFloat(document.getElementById(prefix + "_total_filler").value || "0"),
-      cases: cases,
-      efficiency: efficiency
-    };
-  }
+<label>Efficiency (%)</label>
+<input id="eff${i}" readonly>
+</div>
+`);
+}
+</script>
 
-  function formatDateDDMMYYYY(d) {
-    const day = String(d.getDate()).padStart(2, "0");
-    const mon = String(d.getMonth() + 1).padStart(2, "0");
-    const yr  = d.getFullYear();
-    return `${day}/${mon}/${yr}`;
-  }
+</div>
 
-  // Rule: when phone time is between 00:00 and 06:59 and shift C is selected,
-  //       show previous day date.
-  function getShiftCDate(now) {
-    const h = now.getHours();
-    if (h >= 0 && h < 7) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 1);
-      return d;
-    }
-    return now;
-  }
+<div style="text-align:center;margin-top:15px">
+<button class="btn-primary" onclick="calculateAll()">Calculate</button>
+</div>
+</div>
 
-  function getPreviousHourWindow(now) {
-    const current = new Date(now);
-    const prev = new Date(current);
-    prev.setMinutes(0, 0, 0);
-    prev.setHours(prev.getHours() - 1);
+<div class="container">
+<h3>Summary</h3>
+<div id="summary" class="summary"></div>
 
-    const startHour = prev.getHours();
-    const endHour = (startHour + 1) % 24;
+<div class="footer-buttons">
+<button class="btn-secondary" onclick="copySummary()">Copy</button>
+<button class="btn-primary" onclick="shareWhatsApp()">WhatsApp</button>
+</div>
+</div>
 
-    function formatHour12(h) {
-      const suffix = h >= 12 ? "PM" : "AM";
-      const hour12 = ((h + 11) % 12) + 1;
-      return `${hour12}:00 ${suffix}`;
-    }
+<script>
+function pad(n){return n<10?"0"+n:n}
 
-    const timeStr = `${formatHour12(startHour)} to ${formatHour12(endHour)}`;
-    return timeStr;
-  }
+function setDateTime(){
+const now=new Date()
+const shift=shiftEl.value
 
-  function calculateAll() {
-    const l1 = calcLine("l1");
-    const l2 = calcLine("l2");
-    const l3 = calcLine("l3");
-    const lines = [l1, l2, l3];
+const end=new Date(now)
+end.setMinutes(0,0,0)
+const start=new Date(end)
+start.setHours(start.getHours()-1)
 
-    const shift = document.getElementById("shift").value;
-    const now = new Date();
+let d=new Date(now)
+if(shift==="C" && end.getHours()<7){d.setDate(d.getDate()-1)}
 
-    // Date logic
-    let dateForSummary;
-    if (shift === "C") {
-      dateForSummary = getShiftCDate(now);
-    } else {
-      dateForSummary = now;
-    }
-    const dateStr = formatDateDDMMYYYY(dateForSummary);
+date.value=`${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`
 
-    // Previous hour window in 12-hour format
-    const timeStr = getPreviousHourWindow(now);
+function t(x){
+let h=x.getHours(),m=pad(x.getMinutes())
+let a=h>=12?"PM":"AM";h=h%12||12
+return `${h}:${m} ${a}`
+}
+time.value=`${t(start)} to ${t(end)}`
+}
 
-    let summary = "";
-    summary += `Date: ${dateStr}
-`;
-    summary += `Shift: ${shift}
-`;
-    summary += `Time: ${timeStr}
+function calc(i){
+const filler=Math.max((+totalEl(i).value||0)-(+prevEl(i).value||0),0)
+fillerEl(i).value=filler
 
-`;
+const bpc=skus[skuEl(i).value]
+const actualCases=Math.floor(filler/bpc)
+casesEl(i).value=actualCases
 
-    lines.forEach((line, index) => {
-      if (line.filler > 0) {
-        summary += `Line ${index + 1}: ${line.sku}
-`;
-        summary += `Filler Counter: ${line.filler}
-`;
-        summary += `Total Filler Counter: ${line.totalFiller}
-`;
-        summary += `Number of Cases: ${line.cases}
-`;
-        summary += `Net Efficiency: ${line.efficiency.toFixed(2)}%
+const speed=+speedEl(i).value||0
+const bottlesPerHour=unitEl(i).value==="BPM"?speed*60:speed
+const theoreticalCases=bottlesPerHour>0?bottlesPerHour/bpc:0
 
-`;
-      }
-    });
+effEl(i).value=theoreticalCases?((actualCases/theoreticalCases)*100).toFixed(2):"0.00"
+}
 
-    // breakdown line
-    summary += `Breakdown:
-`;
-    lines.forEach((line, index) => {
-      if (line.filler > 0) {
-        const eff = line.efficiency / 100; // convert to 0–1
-        const minutes = (1 - eff) * 60;
-        summary += `Line ${index + 1}: ${minutes.toFixed(2)} minutes
-`;
-      }
-    });
+function calculateAll(){
+setDateTime()
+let out=`Date: ${date.value}
+Shift: ${shiftEl.value}
+Time: ${time.value}\n\n`
 
-    document.getElementById("summary").textContent = summary.trim() || "No data entered.";
-  }
+for(let i=1;i<=3;i++){
+if(+fillerEl(i).value>0){
+out+=`Line ${i}: ${skuEl(i).value}
+Filler Counter: ${fillerEl(i).value}
+Total Filler Counter: ${totalEl(i).value}
+Number of Cases: ${casesEl(i).value}
+Net Efficiency: ${effEl(i).value}%\n\n`
+}}
 
-  function copySummary() {
-    const text = document.getElementById("summary").textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Summary copied to clipboard!");
-    }).catch(err => {
-      alert("Failed to copy summary: " + err);
-    });
-  }
+out+="Breakdown:\n"
+for(let i=1;i<=3;i++){
+const eff=+effEl(i).value
+if(eff>0){
+out+=`Line ${i} (${skuEl(i).value}): ${((1-eff/100)*60).toFixed(2)} minutes\n`
+}}
+
+summary.textContent=out.trim()
+}
+
+function parseSummary(){
+const t=prevSummary.value
+for(let i=1;i<=3;i++){
+const r=new RegExp(`Line ${i}: (.+)[\\s\\S]*?Total Filler Counter: (\\d+)`)
+const m=t.match(r)
+if(m){skuEl(i).value=m[1];prevEl(i).value=m[2]}
+}
+}
+
+function copySummary(){navigator.clipboard.writeText(summary.textContent)}
+function shareWhatsApp(){
+window.open(`https://wa.me/?text=${encodeURIComponent(summary.textContent)}`,"_blank")
+}
+
+const skuEl=i=>document.getElementById("sku"+i)
+const speedEl=i=>document.getElementById("speed"+i)
+const unitEl=i=>document.getElementById("unit"+i)
+const totalEl=i=>document.getElementById("total"+i)
+const prevEl=i=>document.getElementById("prev"+i)
+const fillerEl=i=>document.getElementById("filler"+i)
+const casesEl=i=>document.getElementById("cases"+i)
+const effEl=i=>document.getElementById("eff"+i)
+const shiftEl=document.getElementById("shift")
+
+setDateTime()
+shiftEl.addEventListener("change",setDateTime)
 </script>
 
 </body>
